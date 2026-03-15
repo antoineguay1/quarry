@@ -39,5 +39,6 @@ jobs:
           # Start a D-Bus session and unlock gnome-keyring so that keyring v2
           # can access the Secret Service on this headless Linux runner.
           eval $(dbus-launch --sh-syntax)
-          echo -n "" | gnome-keyring-daemon --unlock --components=secrets
+          eval $(echo -n "" | gnome-keyring-daemon --daemonize --unlock --components=secrets)
+          export GNOME_KEYRING_CONTROL
           cargo test --manifest-path src-tauri/Cargo.toml
