@@ -30,16 +30,27 @@ Using the `Edit` tool (not sed), update the version string in:
 
 After editing, verify all three files show the new version with a quick `grep version`.
 
-## Step 3 — Git commit
+## Step 3 — Update lock files
 
-Stage the three files and commit:
+Run the following commands to regenerate the lock files with the new version:
 
 ```bash
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+npm install --package-lock-only
+cargo update --manifest-path src-tauri/Cargo.toml --precise NEW_VERSION quarry 2>/dev/null || (cd src-tauri && cargo generate-lockfile)
+```
+
+If `npm install` or the cargo command fails, report the error and stop.
+
+## Step 4 — Git commit
+
+Stage all five files and commit:
+
+```bash
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml package-lock.json src-tauri/Cargo.lock
 git commit -m "chore: bump version to NEW_VERSION"
 ```
 
-## Step 4 — Tag and push
+## Step 5 — Tag and push
 
 ```bash
 git tag vNEW_VERSION
@@ -48,7 +59,7 @@ git push origin vNEW_VERSION
 
 If either command fails, report the error to the user and stop.
 
-## Step 5 — Wait for GitHub release workflow
+## Step 6 — Wait for GitHub release workflow
 
 Poll the GitHub Actions workflow that is triggered by the tag push. Use `gh run list` to find it:
 
@@ -68,13 +79,13 @@ If `gh run watch` is not available, poll manually:
 gh run view RUN_ID --json status,conclusion
 ```
 
-- If the workflow **succeeds**: proceed to Step 6.
+- If the workflow **succeeds**: proceed to Step 7.
 - If the workflow **fails**: inform the user:
   > "The release workflow failed. Check the details at: [run URL from `gh run view RUN_ID --json url`]"
   > Then stop.
 - Timeout after 20 minutes of polling — if still running, inform the user to check GitHub Actions manually and provide the run URL.
 
-## Step 6 — Inform user
+## Step 7 — Inform user
 
 Once the release workflow completes successfully and the draft release is created, output:
 
