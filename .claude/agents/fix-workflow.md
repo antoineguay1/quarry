@@ -21,11 +21,11 @@ The repo owner is `antoineguay1` and the repo name is `quarry`.
 
 ## Step 1 — Find the failing run
 
-If a GitHub Actions URL was passed as an argument, extract the run ID from it and skip to Step 2. Both formats are supported:
-- Run URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678`
-- Job URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678/job/67099434703`
+If a GitHub Actions URL was passed as an argument, parse it to extract both the run ID and (if present) the job ID, then skip to Step 2:
+- Run URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678` → `runId=12345678`, `jobId=null`
+- Job URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678/job/67099434703` → `runId=12345678`, `jobId=67099434703`
 
-In both cases, the run ID is the number after `/runs/`.
+The run ID is the number after `/runs/`. The job ID (if present) is the number after `/job/`.
 
 Otherwise, discover the run:
 
@@ -41,6 +41,12 @@ If only one failed run exists, proceed automatically.
 
 ## Step 2 — Get failure details
 
+If `jobId` is known (extracted from a job URL):
+```bash
+gh run view <RUN_ID> --repo antoineguay1/quarry --job <JOB_ID>
+```
+
+Otherwise:
 ```bash
 gh run view <RUN_ID> --repo antoineguay1/quarry --log-failed
 ```
