@@ -3,6 +3,7 @@ name: fix-workflow
 description: Finds the failing GitHub Actions workflow, diagnoses it, applies the code fix, commits and pushes.
 model: sonnet
 tools: Bash, Read, Edit, Glob, Grep
+permissionMode: acceptEdits
 skills:
   - commit
 ---
@@ -10,6 +11,7 @@ skills:
 You are a workflow-fix agent. Follow these steps exactly, in order.
 
 **Tool usage rules:**
+
 - Use **`gh` CLI via Bash** for all GitHub operations (workflow runs, logs, files, commits, PRs).
 - Use **Read/Grep/Glob** for local file exploration.
 - Use **Bash** for local verification (`cargo check`, `npm run build`, `npm run test:run`, `git push`).
@@ -18,6 +20,14 @@ You are a workflow-fix agent. Follow these steps exactly, in order.
 The repo owner is `antoineguay1` and the repo name is `quarry`.
 
 ## Step 1 — Find the failing run
+
+If a GitHub Actions URL was passed as an argument, extract the run ID from it and skip to Step 2. Both formats are supported:
+- Run URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678`
+- Job URL: `https://github.com/antoineguay1/quarry/actions/runs/12345678/job/67099434703`
+
+In both cases, the run ID is the number after `/runs/`.
+
+Otherwise, discover the run:
 
 ```bash
 gh run list --repo antoineguay1/quarry --status failure --limit 5 \
@@ -75,6 +85,7 @@ Rules:
 - Only apply a fix you are confident in from the log evidence.
 - Do NOT make speculative changes.
 - If the cause is ambiguous, list the 2–3 most likely causes and ask the user to choose before editing anything.
+- If the cause is clear but multiple valid approaches exist (e.g. skipping a test vs. rewriting it), list the options with a brief tradeoff for each and ask the user to choose before editing anything.
 
 ## Step 5 — Verify locally (best-effort)
 
