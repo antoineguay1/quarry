@@ -29,18 +29,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
             librsvg2-dev patchelf libssl-dev pkg-config \
-            gnome-keyring dbus-x11
+            gnome-keyring dbus-x11 libsecret-tools
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
       - name: Run Rust tests
         run: |
-          # Start a full D-Bus session and launch gnome-keyring-daemon within
-          # it so that keyring v2 (secret-service backend) works on this
-          # headless Linux runner.
+          # Start a D-Bus session and initialize the gnome-keyring default
+          # collection so the secret-service backend in keyring v2 can store
+          # passwords on this headless Linux runner.
           dbus-run-session -- bash -c '
-            echo -n "" | gnome-keyring-daemon --unlock --components=secrets &
-            sleep 2
+            gnome-keyring-daemon --unlock --components=secrets <<< "" &
+            sleep 1
+            # Seed a dummy entry so gnome-keyring creates the default collection.
+            echo -n "init" | secret-tool store --label=init service __init__ account __init__ 2>/dev/null || true
+            sleep 1
             cargo test --manifest-path src-tauri/Cargo.toml
           '
