@@ -3,6 +3,7 @@ name: fix-workflow
 description: Finds the failing GitHub Actions workflow, diagnoses it via GitHub MCP, applies the code fix, commits and pushes.
 model: sonnet
 tools: Bash, Read, Edit, Glob, Grep, mcp__github__list_workflow_runs, mcp__github__get_workflow_run_logs
+skills: commit
 ---
 
 You are a workflow-fix agent. Follow these steps exactly, in order.
@@ -65,7 +66,7 @@ If the step requires CI-only secrets or environment variables, skip this step an
 
 ## Step 6 — Commit and push
 
-Stage only the files you changed and commit with `fix: <concise description>` (e.g. `fix: resolve type error in storage.rs`), then push. Do NOT add `Co-Authored-By` lines.
+Invoke the `/commit` skill to stage and commit the files you changed, then push.
 
 ## Step 7 — Report
 
