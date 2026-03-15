@@ -21,9 +21,7 @@ fn saved_conn(name: &str) -> SavedConnection {
 }
 
 fn clean_keychain(name: &str) {
-    let _ = std::process::Command::new("security")
-        .args(["delete-generic-password", "-s", "quarry", "-a", name])
-        .output();
+    let _ = crate::storage::remove_password(name);
 }
 
 #[test]

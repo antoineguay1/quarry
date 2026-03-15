@@ -51,9 +51,7 @@ fn clear_connections_file(app: &tauri::App<tauri::test::MockRuntime>) {
 /// `delete_password` can silently fail on the macOS legacy Keychain in test
 /// environments, leaving entries that cause `set_password` to fail.
 fn clean_keychain(name: &str) {
-    let _ = std::process::Command::new("security")
-        .args(["delete-generic-password", "-s", "quarry", "-a", name])
-        .output();
+    let _ = crate::storage::remove_password(name);
 }
 
 // ── load_connections ──────────────────────────────────────────────────────────

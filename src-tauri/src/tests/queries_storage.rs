@@ -10,9 +10,7 @@ static FILE_LOCK: Mutex<()> = Mutex::new(());
 static KEYCHAIN_LOCK: Mutex<()> = Mutex::new(());
 
 fn clean_ai_keychain() {
-    let _ = std::process::Command::new("security")
-        .args(["delete-generic-password", "-s", "quarry", "-a", "__ai_key__"])
-        .output();
+    let _ = crate::storage::remove_password("__ai_key__");
 }
 
 fn build_app() -> tauri::App<tauri::test::MockRuntime> {
