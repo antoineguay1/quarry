@@ -1,3 +1,4 @@
+use std::time::Duration;
 use crate::db::{is_select_query, DbConnection};
 use crate::models::FilterEntry;
 
@@ -39,13 +40,21 @@ fn empty_string_is_false() {
 // ── DbConnection lazy-pool dispatch ───────────────────────────────────────────
 
 fn lazy_pg() -> DbConnection {
-    use sqlx::postgres::PgPool;
-    DbConnection::Postgres(PgPool::connect_lazy("postgres://user:pass@localhost/db").unwrap())
+    use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+    let opts: PgConnectOptions = "postgres://user:pass@localhost/db".parse().unwrap();
+    let pool = PgPoolOptions::new()
+        .acquire_timeout(Duration::from_millis(100))
+        .connect_lazy_with(opts);
+    DbConnection::Postgres(pool)
 }
 
 fn lazy_mysql() -> DbConnection {
-    use sqlx::mysql::MySqlPool;
-    DbConnection::Mysql(MySqlPool::connect_lazy("mysql://user:pass@localhost/db").unwrap())
+    use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions};
+    let opts: MySqlConnectOptions = "mysql://user:pass@localhost/db".parse().unwrap();
+    let pool = MySqlPoolOptions::new()
+        .acquire_timeout(Duration::from_millis(100))
+        .connect_lazy_with(opts);
+    DbConnection::Mysql(pool)
 }
 
 fn make_filter(col: &str, value: &str) -> FilterEntry {
