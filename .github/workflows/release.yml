@@ -50,11 +50,44 @@ jobs:
 
       - run: npm ci
 
+      - name: Create self-signed code signing certificate
+        if: matrix.platform == 'macos-latest'
+        run: |
+          security create-keychain -p "" build.keychain
+          security list-keychains -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          cat > cert.cfg << 'EOF'
+          [req]
+          default_bits = 2048
+          prompt = no
+          default_md = sha256
+          distinguished_name = dn
+          x509_extensions = v3_req
+          [dn]
+          CN = Quarry Self-Signed
+          [v3_req]
+          keyUsage = critical,digitalSignature
+          extendedKeyUsage = critical,codeSigning
+          EOF
+
+          openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem \
+            -days 1 -nodes -config cert.cfg
+          openssl pkcs12 -export -out cert.p12 -inkey key.pem -in cert.pem \
+            -passout pass:""
+
+          security import cert.p12 -k build.keychain -P "" \
+            -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ matrix.platform == 'macos-latest' && 'Quarry Self-Signed' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Quarry ${{ github.ref_name }}'
