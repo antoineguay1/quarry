@@ -36,9 +36,11 @@ jobs:
           workspaces: src-tauri
       - name: Run Rust tests
         run: |
-          # Start a D-Bus session and unlock gnome-keyring so that keyring v2
-          # can access the Secret Service on this headless Linux runner.
-          eval $(dbus-launch --sh-syntax)
-          eval $(echo -n "" | gnome-keyring-daemon --daemonize --unlock --components=secrets)
-          export GNOME_KEYRING_CONTROL
-          cargo test --manifest-path src-tauri/Cargo.toml
+          # Start a full D-Bus session and launch gnome-keyring-daemon within
+          # it so that keyring v2 (secret-service backend) works on this
+          # headless Linux runner.
+          dbus-run-session -- bash -c '
+            echo -n "" | gnome-keyring-daemon --unlock --components=secrets &
+            sleep 2
+            cargo test --manifest-path src-tauri/Cargo.toml
+          '
